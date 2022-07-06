@@ -1,0 +1,373 @@
+IOT 
+
+1.Traffic light 
+
+//Car
+int carRed = 12;
+int carYellow = 11;
+int carGreen = 10;
+
+//Pedestrain
+int pedRed = 5;
+int pedGreen = 4;
+
+int button = 2;
+
+int crossTime = 5000;
+
+unsigned long changeTime;
+
+void setup()
+{
+  pinMode(carRed, OUTPUT);
+  pinMode(carYellow, OUTPUT);
+  pinMode(carGreen, OUTPUT);
+  pinMode(pedRed, OUTPUT);
+  pinMode(pedGreen, OUTPUT);
+  pinMode(button, OUTPUT);
+}
+
+void loop()
+{
+  int state = digitalRead(button);
+  /*check if button is pressed and it is
+  over 5 seconds since last button press*/
+  if(state == HIGH &&(millis() - changeTime) > 5000)
+    changeLights();
+  	//Call the function to change the lights
+}
+void changeLights()
+{
+  digitalWrite(carGreen, LOW);
+  digitalWrite(carYellow, HIGH);
+  delay(2000);
+  digitalWrite(carYellow, LOW);
+  digitalWrite(carRed, HIGH);
+  delay(1000);
+  digitalWrite(pedRed, LOW);
+  digitalWrite(pedGreen, HIGH);
+  delay(crossTime);
+  //flash the ped green
+  for(int i = 0; i < 10; i++)
+  {
+    digitalWrite(pedGreen, HIGH);
+    delay(250);
+    digitalWrite(pedGreen, LOW);
+    delay(250);
+  }
+  //turn ped red on
+  digitalWrite(pedRed, HIGH);
+  delay(500);
+  digitalWrite(carYellow, HIGH);
+  digitalWrite(carRed, LOW);
+  delay(1000);
+  digitalWrite(carGreen, HIGH);
+  digitalWrite(carYellow, LOW);
+  //record the time since last change of lighhts 
+  changeTime = millis();
+  
+}
+
+2.Servo motor with potentiometer
+
+#include<Servo.h>
+
+Servo myservo;
+int potpin = 0;
+int val;
+
+void setup()
+{
+  myservo.attach(9);
+}
+
+void loop()
+{
+  val = analogRead(potpin); // reads the value of the potentiometer(value between 0 and 1023)
+  val = map(val,0,1023,0,180); //scale it to use it with the servo(value between 0 and 180)
+  myservo.write(val);
+  delay(15);
+}
+
+3.IR sensor
+
+void setup()
+{
+  pinMode(2, INPUT);
+  pinMode(13, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop()
+{
+  int status = digitalRead(2);
+  if(status == 0)
+  {
+    digitalWrite(13,HIGH);
+    Serial.println("LED is ON");
+    Serial.println(status);
+  }
+  else
+  {
+    digitalWrite(13, LOW);
+    Serial.println("LED is OFF");
+    Serial.println(status);
+  }
+}
+
+4.PIR sensor
+
+int led = 13;
+int sensor = 2;
+int state = LOW;
+int val = 0;
+
+void setup()
+{
+  pinMode(led, OUTPUT);
+  pinMode(sensor, INPUT);
+  Serial.begin(9600);
+}
+
+void loop()
+{
+  val = digitalRead(sensor);
+  if(val == HIGH)
+  {
+    digitalWrite(led,HIGH);
+    delay(500);
+    if(state == LOW)
+    {
+      Serial.println("Motion detected");
+      state = HIGH;
+    }
+  }
+  else
+  {
+    digitalWrite(led,LOW);
+    delay(500);
+    if(state == HIGH)
+    {
+      Serial.println("Motion Stopped!");
+      state = LOW;
+    }
+    
+  }
+}
+
+5.RFID security access
+
+#include<SPI.h>
+#include<RFID.h>
+#define SS_PIN 10
+#define RST_PIN 9
+
+RFID rfid(SS_PIN, RST_PIN);
+String rfidCard;
+
+void setup()
+{
+  Serial.begin(9600);
+  Serial.println("Starting the RFID reader...");
+  SPI.begin();
+  rfid.begin();
+}
+
+void loop()
+{
+  if(rfid.isCard()){
+    if(rfid.readCardSerial()){
+        rfidCard = String(rfid.serNum[0]) + " " + String(rfid.serNum[1]) + " " + String(rfid.serNum[2]) + " " + String(rfid.serNum[3]);
+        Serial.println(rfidCard);
+    }
+    rfid.halt();
+  }
+  /*
+  if(rfidCard == "11 22 33 44")
+    Serial.println("Access Allowed");
+  else
+    Serial.println("Access Denied");   
+}
+
+
+Raspberry Programs
+
+1.Blinking of an LED
+python prgm:-
+import RPi.GPIO as GPIO
+import time
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(18, GPIO.OUT)
+GPIO.output(18, GPIO.HIGH)
+
+time.sleep(3)
+
+GPIO.output(18, GPIO.LOW)
+GPIO.cleanup()
+
+terminal cmd:-
+sudo nano test.py
+python test.py
+
+2.PI camera module
+python program:-
+import picamera
+import time
+
+camera = picamera.PiCamera()
+camera.capture("pic1.jpg")
+camera.vfilp = True
+camera.capture("pic2.jpg")
+
+camera.start_recording("vid.h264")
+time.sleep(5)
+camera.stop_recording()
+
+terminal cmd:-
+sudo raspi-config
+Interfacing options -> Enable camera
+
+sudo nano test.py
+python test.py
+
+3.DHT sensor for temperature and humidity
+pin connections:-
+'VCC' or '+' -> to pin2 (5v)
+'GND' or '-' -> to pin6 (GND)
+'OUT' or 'Signal' -> to pin7 (GPIO4)
+
+
+python program:-
+import sys
+import Adafruit_DHT
+import time
+
+while True:
+	humidity, temperature = Adafruit_DHT.read_retry(22,4)
+	print(humidity)
+	print(temperature)
+	time.sleep(1)
+
+terminal cmd:-
+sudo nano test.py
+python test.py
+
+4.Ultrasonic sensor(HC-SR04)
+pin connections
+'VCC' -> to pin2 (5v)
+'GND' -> to pin6 (GND)
+'TRIG' -> to pin7 (GPIO4)
+'ECHO' -> to pin12 (GPIO18)
+
+python program:-
+import RPi.GPIO as GPIO
+import time
+
+GPIO.setmode(GPIO.BCM)
+
+TRIG = 4
+ECHO = 18
+
+GPIO.setup(TRIG,GPIO.OUT)
+GPIO.setup(ECHO,GPIO.IN)
+
+GPIO.output(TRIG, True)
+time.sleep(0.00001)
+GPIO.output(TRIG, False)
+
+while GPIO.input(ECHO) == False:
+	start = time.time()
+while GPIO.input(ECHO) == True:
+	end = time.time()
+
+sig_time = end-start
+#CM
+distance = sig_time/0.000058
+#inches:
+#distance = sig_time/0.0000148
+
+print(distance)
+
+GPIO.cleanup()
+
+terminal cmd:-
+sudo nano test.py
+python test.py
+
+5.Garage spot light
+pin connections
+'VCC' -> to pin2 (5v)
+'GND' -> to pin6 (GND)
+'TRIG' -> to pin7 (GPIO4)
+'ECHO' -> to pin12 (GPIO18)
+
+python program:-
+import RPi.GPIO as GPIO
+import time
+
+GPIO.setwarnings(False)
+GPIO.cleanup()
+
+GPIO.setmode(GPIO.BCM)
+TRIG = 4
+ECHO = 18
+GREEN = 17
+YELLOW = 27
+RED = 22
+
+GPIO.setup(TRIG,GPIO.OUT)
+GPIO.setup(ECHO,GPIO.IN)
+
+GPIO.setup(GREEN,GPIO.OUT)
+GPIO.setup(RED,GPIO.OUT)
+GPIO.setup(YELLOW,GPIO.OUT)
+
+def green_light():
+	GPIO.output(GREEN, GPIO.HIGH)
+	GPIO.output(YELLOW, GPIO.LOW)
+	GPIO.output(RED, GPIO.LOW)
+
+def yellow_light():
+	GPIO.output(GREEN, GPIO.LOw)
+	GPIO.output(YELLOW, GPIO.HIGH)
+	GPIO.output(RED, GPIO.LOW)
+
+def red_light():
+	GPIO.output(GREEN, GPIO.LOW)
+	GPIO.output(YELLOW, GPIO.LOW)
+	GPIO.output(RED, GPIO.HIGH)
+
+def get_distance():
+	GPIO.output(TRIG, True)
+	time.sleep(0.00001)
+	GPIO.output(TRIG, False)
+
+	while GPIO.input(ECHO) == False:
+		start = time.time()
+	while GPIO.input(ECHO) == True:
+		end = time.time()
+
+	sig_time = end-start
+	#CM
+	distance = sig_time/0.000058
+	#inches:
+	#distance = sig_time/0.0000148
+	
+	return distance
+
+while True:
+	distance = get_distance()
+	time.sleep(0.05)
+	print(distance)
+
+	if distance >= 30:
+		green_light()
+	elif 30 > distance > 10:
+		yellow_light()
+	elif distance <= 10:
+		red_light()
+
+terminal cmd:-
+sudo nano test.py
+python test.py
